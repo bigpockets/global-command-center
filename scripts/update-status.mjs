@@ -48,6 +48,39 @@ const incidents = feed.filter(item => !item.end).map(item => {
   };
 }).sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
 
-await writeFile(target, JSON.stringify({ checkedAt: new Date().toISOString(), incidents, services }, null, 2) + '\n');
+async function readJira() {
+  const url = 'https://jira-software.status.atlassian.com/';
+  const levels = new Map([
+    ['none', 'No public incidents'], ['minor', 'Degraded'], ['major', 'Outage'],
+    ['critical', 'Outage'], ['maintenance', 'Advisory']
+  ]);
+  try {
+    const response = await fetch(new URL('api/v2/summary.json', url), {
+      signal: AbortSignal.timeout(10000)
+    });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const { status, components } = await response.json();
+    if (typeof status?.description !== 'string' || !levels.has(status.indicator)) {
+      throw new Error('Unrecognized Jira status');
+    }
+    const componentLevels = new Map([
+      ['operational', 'No public incidents'], ['degraded_performance', 'Degraded'],
+      ['partial_outage', 'Outage'], ['major_outage', 'Outage'], ['under_maintenance', 'Advisory']
+    ]);
+    const services = (Array.isArray(components) ? components : [])
+      .filter(component => !component.group && typeof component.name === 'string')
+      .map(component => ({
+        title: component.name, status: componentLevels.get(component.status) || 'Unknown'
+      }));
+    return { status: levels.get(status.indicator), description: status.description, services };
+  } catch (error) {
+    console.warn('Jira status unavailable:', error.message);
+    return { status: 'Unknown', description: 'Public status unavailable' };
+  }
+}
+
+const jira = await readJira();
+
+await writeFile(target, JSON.stringify({ checkedAt: new Date().toISOString(), incidents, services, jira }, null, 2) + '\n');
 console.log('Published snapshot with ' + incidents.length + ' active public incident(s).');
 
