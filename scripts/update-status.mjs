@@ -81,6 +81,31 @@ async function readJira() {
 
 const jira = await readJira();
 
-await writeFile(target, JSON.stringify({ checkedAt: new Date().toISOString(), incidents, services, jira }, null, 2) + '\n');
+async function readMarket() {
+  try {
+    const response = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/SPY?interval=5m&range=5d', {
+      signal: AbortSignal.timeout(10000)
+    });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const result = (await response.json()).chart?.result?.[0];
+    if (result?.meta?.symbol !== 'SPY') throw new Error('Unexpected symbol');
+    const closes = result.indicators.quote[0].close;
+    const date = new Intl.DateTimeFormat('en-CA', {timeZone:'America/New_York',dateStyle:'short'});
+    const points = result.timestamp.map((at,i) => ({at:at*1000,price:closes[i]}))
+      .filter(({at,price}) => Number.isFinite(at) && Number.isFinite(price));
+    if (!points.length) throw new Error('No quotes');
+    const session = date.format(points.at(-1).at);
+    const current = points.filter(({at}) => date.format(at) === session);
+    const previous = points.findLast(({at}) => date.format(at) !== session);
+    return { points:current, previousClose:previous?.price ?? null };
+  } catch (error) {
+    console.warn('SPY unavailable:', error.message);
+    return null;
+  }
+}
+
+const market = await readMarket();
+
+await writeFile(target, JSON.stringify({ checkedAt: new Date().toISOString(), incidents, services, jira, market }, null, 2) + '\n');
 console.log('Published snapshot with ' + incidents.length + ' active public incident(s).');
 
