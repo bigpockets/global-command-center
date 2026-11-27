@@ -62,44 +62,107 @@ function openIncident(incident, trigger) {
   }, { once: true });
 }
 
-function renderServices(incidents, unavailable) {
-  const list = byId('service-status-list');
-  const services = snapshot?.services || [{ id: '', title: 'Google Cloud' }];
-  const fragment = document.createDocumentFragment();
+const providers = [
+  { id: 'google', title: 'Google Cloud', url: 'https://status.cloud.google.com/', scope: 'Regional incident reports' },
+  { id: 'webex', title: 'Webex', url: 'https://status.webex.com/', scope: 'Feed pending' },
+  { id: 'aws', title: 'AWS', url: 'https://health.aws.amazon.com/health/status', scope: 'Feed pending' },
+  { id: 'azure', title: 'Azure', url: 'https://azure.status.microsoft/en-us/status', scope: 'Feed pending' },
+  { id: 'm365', title: 'Microsoft 365', url: 'https://status.cloud.microsoft/m365', scope: 'Organization access required' },
+  { id: 'jira', title: 'Jira Cloud', url: 'https://jira-software.status.atlassian.com/', scope: 'Global status only' }
+];
+const clear = 'No public incidents';
+const statusClass = status => status === clear ? 'operational' : status.toLowerCase();
+let selectedProvider;
+
+function googleRows(incidents, stale) {
+  const services = snapshot?.services || [];
+  const regional = regionFilter.value;
+  const unassigned = incidents.some(incident =>
+    (!regional || matchesRegion(incident, regional) || !incident.locations.length) &&
+    (!incident.productIds?.length || (regional && !incident.locations.length))
+  );
   const byProduct = new Map();
-  for (const incident of incidents) {
+  for (const incident of incidents.filter(item => matchesRegion(item, regional))) {
     for (const id of incident.productIds || []) {
       if (!byProduct.has(id)) byProduct.set(id, []);
       byProduct.get(id).push(incident);
     }
   }
-  const unassigned = incidents.some(incident => !incident.productIds?.length);
-  for (const {id, title} of services) {
-    const item = document.createElement('li');
-    const heading = document.createElement('strong');
-    heading.textContent = title;
-    item.append(heading);
+  return services.map(({id, title}) => {
     const related = byProduct.get(id) || [];
-    const status = unavailable ? 'Unknown' : priority.find(level => related.some(incident => incident.status === level))
-      || (unassigned ? 'Unknown' : 'No public incidents');
-    const badge = document.createElement('span');
-    badge.className = status === 'No public incidents' ? 'operational' : status.toLowerCase();
+    const status = stale ? 'Unknown' : priority.find(level => related.some(item => item.status === level))
+      || (unassigned ? 'Unknown' : clear);
+    return { title, status, incidents: stale ? [] : related };
+  });
+}
+
+const cards = providers.map(provider => {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.setAttribute('aria-controls', 'provider-detail');
+  const label = document.createElement('strong');
+  label.textContent = provider.title;
+  const badge = document.createElement('span');
+  const scope = document.createElement('small');
+  scope.textContent = provider.scope;
+  button.append(label, badge, scope);
+  button.addEventListener('click', () => {
+    selectedProvider = selectedProvider === provider.id ? undefined : provider.id;
+    render();
+  });
+  byId('provider-cards').append(button);
+  return { provider, button, badge };
+});
+
+function renderProviderDetails(incidents, stale) {
+  for (const {provider, button, badge} of cards) {
+    const google = provider.id === 'google';
+    const jira = provider.id === 'jira';
+    const rows = google ? googleRows(incidents, stale) :
+      jira ? (snapshot?.jira?.services || []).map(row => ({...row, status: stale ? 'Unknown' : row.status})) : [];
+    const relevantIncidents = google && !stale
+      ? incidents.filter(item => matchesRegion(item, regionFilter.value)) : [];
+    const highest = priority.find(level => rows.some(row => row.status === level) ||
+      relevantIncidents.some(item => item.status === level));
+    const status = jira && !stale ? snapshot?.jira?.status || 'Unknown' :
+      highest || (rows.length ? clear : 'Unknown');
+    badge.className = statusClass(status);
     badge.textContent = '● ' + status;
-    item.append(badge);
-    if (!unavailable) {
+    const expanded = selectedProvider === provider.id;
+    button.setAttribute('aria-expanded', String(expanded));
+    if (!expanded) continue;
+
+    byId('provider-detail-title').textContent = provider.title + ' services';
+    byId('provider-source').href = provider.url;
+    byId('provider-detail-note').textContent = rows.length
+      ? google
+        ? 'Catalog with ' + (regionFilter.value || 'all regions') + ' public incident reports. Regional availability varies by service.'
+        : 'Atlassian publishes these component states globally.'
+      : 'Component status is unavailable. Open the official status page for details.';
+    const table = byId('provider-services');
+    table.replaceChildren();
+    for (const {title, status: serviceStatus, incidents: related = []} of rows) {
+      const row = table.insertRow();
+      row.insertCell().textContent = title;
+      const state = row.insertCell();
+      state.className = statusClass(serviceStatus);
+      state.textContent = '● ' + serviceStatus;
+      const details = row.insertCell();
       for (const incident of related) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'incident-trigger';
-        button.textContent = incident.summary;
-        button.setAttribute('aria-haspopup', 'dialog');
-        button.addEventListener('click', () => openIncident(incident, button));
-        item.append(button);
+        const trigger = document.createElement('button');
+        trigger.type = 'button';
+        trigger.className = 'incident-trigger';
+        trigger.textContent = incident.summary;
+        trigger.setAttribute('aria-haspopup', 'dialog');
+        trigger.addEventListener('click', () => openIncident(incident, trigger));
+        details.append(trigger);
       }
+      if (!related.length) details.textContent = '—';
     }
-    fragment.append(item);
+    table.closest('.provider-table').hidden = rows.length === 0;
   }
-  list.replaceChildren(fragment);
+  byId('provider-detail').hidden = !selectedProvider;
+  byId('google-incidents').hidden = selectedProvider !== 'google';
 }
 
 function render() {
@@ -116,7 +179,7 @@ function render() {
       ? (incidents.length ? 'Google Cloud informa ' + incidents.length + ' incidente(s) público(s) activo(s).' : 'Sin incidentes públicos activos en Google Cloud.')
       : (fetchFailed ? 'Todavía no hay una lectura disponible de Google Cloud.' : 'Consultando el estado público de Google Cloud.');
 
-  renderServices(incidents, stale || !snapshot?.services?.length);
+  renderProviderDetails(incidents, !!stale);
   matrix.replaceChildren();
   for (const incident of visible) {
     const row = matrix.insertRow();

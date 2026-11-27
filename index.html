@@ -8,12 +8,27 @@
 <link rel="icon" href="./icon-192.png">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <link rel="manifest" href="./manifest.webmanifest">
-<link rel="stylesheet" href="./styles.css?v=0.2.2">
-<script src="./app.js?v=0.2.2" defer></script>
+<link rel="stylesheet" href="./styles.css?v=0.2.4">
+<script src="./app.js?v=0.2.4" defer></script>
 </head>
 <body>
-<header><div class="identity"><div class="logo" aria-hidden="true">G</div><div><h1>Global Command Center</h1><p>Operations intelligence</p></div></div><p class="demo">v0.2.2 · Public service health</p></header>
+<header><div class="identity"><div class="logo" aria-hidden="true">G</div><div><h1>Global Command Center</h1><p>Operations intelligence</p></div></div><p class="demo">v0.2.4 · Public service health</p></header>
 <main>
+<section class="panel" aria-labelledby="platform-status-title">
+<div class="matrix-head"><h2 id="platform-status-title">Provider overview</h2>
+<div class="filters"><label>Region<select id="region"><option value="">All regions</option></select></label></div></div>
+<div id="provider-cards" class="provider-cards"></div>
+<p class="muted provider-scope">Green indicates no reported public issues. Gray indicates unverified status. Global-only reports are labeled.</p>
+</section>
+<section class="panel" id="provider-detail" aria-labelledby="provider-detail-title" hidden>
+<div class="matrix-head"><h2 id="provider-detail-title"></h2>
+<a id="provider-source" target="_blank" rel="noopener noreferrer">Official status page ↗</a></div>
+<p id="provider-detail-note" class="muted"></p>
+<div class="provider-table table-wrap"><table>
+<thead><tr><th scope="col">Service</th><th scope="col">Status</th><th scope="col">Reported incident</th></tr></thead>
+<tbody id="provider-services"></tbody>
+</table></div>
+</section>
 <section class="summary" aria-label="Executive overview">
 <div><p>Active public incidents</p><strong id="active-count">—</strong></div>
 <div><p>Last successful check · local time</p><strong id="freshness">—</strong></div>
@@ -36,18 +51,12 @@
 <h2 id="brief-title">Resumen ejecutivo</h2>
 <p id="feed-state" aria-live="polite">Consultando</p>
 <p class="muted" id="brief-text"></p>
-<article><h3>Fuentes</h3><p><a href="https://status.cloud.google.com/">Google Cloud Service Health</a></p><p><a href="https://riainternal.statuspage.io/" target="_blank" rel="noopener noreferrer">Ria Statuspage</a> · Requiere iniciar sesión con Microsoft.</p><p class="unknown">AWS, Azure, Microsoft 365 y Webex pendientes de conexión.</p></article>
+<article><h3>Fuentes</h3><p><a href="https://status.cloud.google.com/">Google Cloud Service Health</a></p><p><a href="https://riainternal.statuspage.io/" target="_blank" rel="noopener noreferrer">Ria Statuspage</a> · Requiere iniciar sesión con Microsoft.</p></article>
 </section>
 </div>
-<section class="panel" aria-labelledby="service-status-title">
-<h2 id="service-status-title">Google Cloud service status</h2>
-<p class="muted">Green means Google Cloud reports no active public incidents for the service. Gray means its status could not be verified.</p>
-<ul class="service-status-list" id="service-status-list"></ul>
-</section>
-<section class="panel matrix" aria-labelledby="matrix-title">
+<section class="panel matrix" id="google-incidents" aria-labelledby="matrix-title" hidden>
 <div class="matrix-head"><h2 id="matrix-title">Google Cloud public incidents</h2>
-<div class="filters"><label>Region<select id="region"><option value="">All regions</option></select></label>
-<label>Status<select id="status"><option value="">All statuses</option><option>Advisory</option><option>Degraded</option><option>Outage</option><option>Unknown</option></select></label></div></div>
+<div class="filters"><label>Status<select id="status"><option value="">All statuses</option><option>Advisory</option><option>Degraded</option><option>Outage</option><option>Unknown</option></select></label></div></div>
 <p class="muted" id="result" aria-live="polite"></p><p class="muted">Select an incident when one appears to see the latest provider update.</p>
 <div class="table-wrap"><table aria-label="Public service incidents"><thead><tr><th scope="col">Incident / products</th><th scope="col">Region</th><th scope="col">Status</th><th scope="col">Updated · local time</th></tr></thead><tbody id="services"></tbody></table></div>
 </section>

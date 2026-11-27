@@ -34,3 +34,10 @@ a{color:#8acaff}
 .service-status-list{list-style:none;padding:0;margin:16px 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,235px),1fr));gap:10px;max-height:32rem;overflow:auto}
 .service-status-list li{display:grid;align-content:start;gap:5px;padding:12px;border:1px solid var(--border);border-radius:8px;overflow-wrap:anywhere}
 .service-status-list span,.service-status-list button{font-size:13px}
+
+.provider-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:10px;margin-top:14px}
+.provider-cards button{display:grid;text-align:left;gap:5px;padding:14px;color:inherit;background:#0a1422;border:1px solid var(--border);border-radius:8px;cursor:pointer;font:inherit}
+.provider-cards button:hover,.provider-cards button[aria-expanded=true]{border-color:#8acaff;background:#17263a}
+.provider-cards span,.provider-cards small{font-size:13px}.provider-cards small{color:var(--muted)}
+.provider-scope,#provider-detail-note{margin-top:8px}.provider-table{margin-top:12px;max-height:32rem;overflow:auto}
+.provider-table .incident-trigger{display:block}.provider-table .incident-trigger+.incident-trigger{margin-top:6px}
