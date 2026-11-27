@@ -1,3 +1,50 @@
+const translations = {"Operations intelligence":"Inteligencia operativa","Public service health":"Estado público de servicios","Theme":"Tema","Light":"Claro","Dark":"Oscuro","System":"Sistema","Language":"Idioma","Global service health":"Estado regional","Select a region to filter the service matrix.":"Seleccioná una región para filtrar el detalle.","Cloud & Telecom Service Health":"Estado de Cloud y Telecom","Region":"Región","All regions":"Todas las regiones","Service":"Servicio","Status":"Estado","Reported incident":"Incidente reportado","Official status page ↗":"Página oficial de estado ↗","Active public incidents":"Incidentes públicos activos","Last successful check · local time":"Última consulta exitosa · hora local","Green indicates no reported public issues. Gray indicates unverified status. Global-only reports are labeled.":"Verde indica que no hay incidentes públicos reportados. Gris indica estado sin verificar. Los estados globales están identificados.","● No public incidents":"● Sin incidentes públicos","● Advisory":"● Aviso","● Degraded":"● Degradado","● Outage":"● Caída","● Unknown":"● Sin verificar","No public incidents":"Sin incidentes públicos","Advisory":"Aviso","Degraded":"Degradado","Outage":"Caída","Unknown":"Sin verificar","Regional incident reports":"Incidentes regionales","Feed pending":"Fuente pendiente","Organization access required":"Requiere acceso de la organización","Global status only":"Solo estado global","Global":"Global","services":"servicios","Component status is unavailable. Open the official status page for details.":"Estado sin verificar. Consultá la página oficial para más detalles.","Atlassian publishes these component states globally.":"Atlassian publica estos estados a nivel global.","Catalog with":"Catálogo con reportes públicos para","public incident reports. Regional availability varies by service.":"La disponibilidad regional varía por servicio.","Not reported":"Sin informar","See the official incident page for updates.":"Consultá la página oficial para ver actualizaciones.","Google Cloud public incidents":"Incidentes públicos de Google Cloud","All statuses":"Todos los estados","Select an incident when one appears to see the latest provider update.":"Seleccioná un incidente para ver la última actualización.","Incident / products":"Incidente / productos","Updated · local time":"Actualizado · hora local","Close":"Cerrar","Affected products":"Productos afectados","Affected locations":"Ubicaciones afectadas","Started · local time":"Inicio · hora local","Last provider update · local time":"Última actualización · hora local","Latest update from Google Cloud":"Última actualización de Google Cloud","View incident on Google Cloud ↗":"Ver incidente en Google Cloud ↗","No matching incidents in the last available snapshot.":"No hay incidentes coincidentes en la última lectura.","Public incident data unavailable.":"Datos de incidentes no disponibles.","Loading public incident data…":"Cargando datos de incidentes…","No incidents match these filters.":"Ningún incidente coincide con estos filtros.","No active public incidents reported.":"Sin incidentes públicos activos.","public incident(s) in view":"incidente(s) público(s) en vista","No public incidents reported for this region":"Sin incidentes públicos reportados en esta región","04 | Business Risk Intelligence":"04 | Inteligencia de riesgos","05 | Executive Action Center":"05 | Centro de acción ejecutiva","Cybersecurity":"Ciberseguridad","Compliance / FinCEN":"Cumplimiento / FinCEN","FAA / Aviation":"FAA / Aviación","Financial Markets":"Mercados financieros","Energy":"Energía","Geopolitics":"Geopolítica","P1 | Critical Response":"P1 | Respuesta crítica","P2 | Telecom & Contact Center":"P2 | Telecom y centro de contacto","P2 | Infrastructure & Security":"P2 | Infraestructura y seguridad","P3 | Change Management":"P3 | Gestión de cambios","Executive summary":"Resumen ejecutivo","Sources":"Fuentes","Category":"Categoría","Assessment":"Evaluación","Source":"Fuente","Review pending":"Pendiente de revisión","Monitoring sources for editorial review.":"Fuentes de seguimiento para revisión editorial.","Assess activation once a critical incident and its operational impact are confirmed.":"Evaluar activación cuando se confirme un incidente crítico y su impacto operativo.","Telecom Operations · Verify inbound calls, IVR, queues and agent availability.":"Telecom Operations · Validar llamadas entrantes, IVR, colas y disponibilidad de agentes.","Systems, Network & InfoSec · Verify availability with internal telemetry and review security alerts.":"Systems, Network & InfoSec · Corroborar la disponibilidad con telemetría interna y revisar alertas de seguridad.","Infrastructure Leadership · Assess whether to defer nonessential changes during peak demand.":"Infrastructure Leadership · Evaluar si corresponde posponer cambios no esenciales durante períodos de alta demanda."};
+const english = {"Resumen ejecutivo":"Executive summary","Fuentes":"Sources","Categoría":"Category","Evaluación":"Assessment","Fuente":"Source","Pendiente de revisión":"Review pending","Fuentes de seguimiento para revisión editorial.":"Monitoring sources for editorial review.","Evaluar activación cuando se confirme un incidente crítico y su impacto operativo.":"Assess activation once a critical incident and its operational impact are confirmed.","Telecom Operations · Validar llamadas entrantes, IVR, colas y disponibilidad de agentes.":"Telecom Operations · Verify inbound calls, IVR, queues and agent availability.","Systems, Network & InfoSec · Corroborar la disponibilidad con telemetría interna y revisar alertas de seguridad.":"Systems, Network & InfoSec · Verify availability with internal telemetry and review security alerts.","Infrastructure Leadership · Evaluar si corresponde posponer cambios no esenciales durante períodos de alta demanda.":"Infrastructure Leadership · Assess whether to defer nonessential changes during peak demand."};
+const language = document.getElementById('language');
+const themeButtons = [...document.querySelectorAll('[data-theme-choice]')];
+function preference(key, next) {
+  try {
+    if (next !== undefined) localStorage.setItem('gcc-' + key, next);
+    else return localStorage.getItem('gcc-' + key);
+  } catch { /* Preferences are optional. */ }
+}
+const savedLanguage = preference('language');
+language.value = savedLanguage === 'es' ? 'es' : 'en';
+const t = value => language.value === 'es' ? translations[value] || value : value;
+const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+const labels = [];
+while (walker.nextNode()) {
+  const node = walker.currentNode;
+  const key = english[node.textContent.trim()] || node.textContent.trim();
+  if (!node.parentElement.closest('#status') && translations[key]) labels.push({node, key});
+}
+function translatePage() {
+  document.documentElement.lang = language.value;
+  for (const {node, key} of labels) node.textContent = t(key);
+  for (const option of document.querySelectorAll('#status option')) {
+    if (!option.dataset.label) {
+      option.dataset.label = option.textContent;
+      option.value = option.hasAttribute('value') ? option.value : option.textContent;
+    }
+    option.textContent = t(option.dataset.label);
+  }
+  document.querySelector('.theme-control').setAttribute('aria-label', t('Theme'));
+}
+function setTheme(choice) {
+  const theme = ['light','dark','system'].includes(choice) ? choice : 'system';
+  document.documentElement.dataset.theme = theme;
+  for (const button of themeButtons) button.setAttribute('aria-pressed', String(button.dataset.themeChoice === theme));
+  preference('theme', theme);
+}
+for (const button of themeButtons) button.addEventListener('click', () => setTheme(button.dataset.themeChoice));
+setTheme(preference('theme'));
+translatePage();
+language.addEventListener('change', () => {
+  preference('language', language.value);
+  translatePage();
+  render();
+});
+
 const regions = [
   { code: 'AMER', name: 'Americas', x: 25, y: 42 },
   { code: 'EMEA', name: 'Europe, Middle East & Africa', x: 50, y: 38 },
@@ -42,18 +89,18 @@ function matchesRegion(incident, code) {
 
 const detail = byId('incident-detail');
 const formatDate = value => Number.isFinite(Date.parse(value))
-  ? new Date(value).toLocaleString() : 'Not reported';
+  ? new Date(value).toLocaleString(language.value === 'es' ? 'es' : 'en') : t("Not reported");
 
 function openIncident(incident, trigger) {
   const badge = byId('detail-status');
-  badge.textContent = incident.status;
+  badge.textContent = t(incident.status);
   badge.className = incident.status.toLowerCase();
   byId('detail-title').textContent = incident.summary;
   byId('detail-products').textContent = incident.products.join(', ');
-  byId('detail-locations').textContent = incident.locations.map(({ title }) => title).join(', ') || 'Not reported';
+  byId('detail-locations').textContent = incident.locations.map(({ title }) => title).join(', ') || t("Not reported");
   byId('detail-started').textContent = formatDate(incident.startedAt);
   byId('detail-updated').textContent = formatDate(incident.updatedAt);
-  byId('detail-update').textContent = incident.latestUpdate || 'See the official incident page for updates.';
+  byId('detail-update').textContent = incident.latestUpdate || t("See the official incident page for updates.");
   byId('detail-source').href = incident.url;
   detail.showModal();
   detail.addEventListener('close', () => {
@@ -64,12 +111,10 @@ function openIncident(incident, trigger) {
 
 const providers = [
   { id: 'google', title: 'Google Cloud', url: 'https://status.cloud.google.com/', scope: 'Regional incident reports' },
-  ...['Contact Center', 'Calling', 'Meetings', 'Messaging'].map(service => ({
-    id: 'webex-' + service, title: 'Webex ' + service, url: 'https://status.webex.com/', scope: 'Feed pending'
-  })),
-  { id: 'aws', title: 'AWS', url: 'https://health.aws.amazon.com/health/status', scope: 'Feed pending' },
-  { id: 'azure', title: 'Azure', url: 'https://azure.status.microsoft/en-us/status', scope: 'Feed pending' },
-  { id: 'm365', title: 'Microsoft 365', url: 'https://status.cloud.microsoft/m365', scope: 'Organization access required' },
+  { id: 'webex', title: 'Webex', url: 'https://status.webex.com/', scope: 'Feed pending', services: ['Webex Calling','Webex Meetings','Webex Contact Center','Webex Messaging'] },
+  { id: 'aws', title: 'AWS', url: 'https://health.aws.amazon.com/health/status', scope: 'Feed pending', services: ['Amazon EC2','Amazon S3','Amazon RDS','AWS Lambda'] },
+  { id: 'azure', title: 'Azure', url: 'https://azure.status.microsoft/en-us/status', scope: 'Feed pending', services: ['Virtual Machines','Azure Storage','Azure SQL Database','Azure Functions'] },
+  { id: 'm365', title: 'Microsoft 365', url: 'https://status.cloud.microsoft/m365', scope: 'Organization access required', services: ['Exchange Online','Microsoft Teams','SharePoint Online','OneDrive for Business'] },
   { id: 'jira', title: 'Jira Cloud', url: 'https://jira-software.status.atlassian.com/', scope: 'Global status only' }
 ];
 const clear = 'No public incidents';
@@ -149,12 +194,12 @@ function renderProviderDetails(incidents, stale) {
     const google = provider.id === 'google';
     const jira = provider.id === 'jira';
     const rows = google ? googleRows(incidents, stale) :
-      jira ? (snapshot?.jira?.services || []).map(row => ({...row, status: stale ? 'Unknown' : row.status})) : [];
-    scope.textContent = jira ? 'Global · ' + statusForRegion(provider, '', incidents, stale) : provider.scope;
+      jira ? (snapshot?.jira?.services || []).map(row => ({...row, status: stale ? 'Unknown' : row.status})) : (provider.services || []).map(title => ({ title, status: 'Unknown' }));
+    scope.textContent = jira ? t('Global') + ' · ' + t(statusForRegion(provider, '', incidents, stale)) : t(provider.scope);
     for (const {code, indicator} of regional) {
       const status = statusForRegion(provider, code, incidents, stale);
       indicator.className = statusClass(status);
-      indicator.title = provider.title + ' · ' + code + ' · ' + status;
+      indicator.title = provider.title + ' · ' + code + ' · ' + t(status);
       indicator.setAttribute('aria-label', indicator.title);
       indicator.setAttribute('aria-expanded', String(selectedProvider === provider.id && regionFilter.value === code));
     }
@@ -162,13 +207,13 @@ function renderProviderDetails(incidents, stale) {
     button.setAttribute('aria-expanded', String(expanded));
     if (!expanded) continue;
 
-    byId('provider-detail-title').textContent = provider.title + ' services';
+    byId('provider-detail-title').textContent = provider.title + ' · ' + t('services');
     byId('provider-source').href = provider.url;
-    byId('provider-detail-note').textContent = rows.length
+    byId('provider-detail-note').textContent = (google || jira) && rows.length
       ? google
-        ? 'Catalog with ' + (regionFilter.value || 'all regions') + ' public incident reports. Regional availability varies by service.'
-        : 'Atlassian publishes these component states globally.'
-      : 'Component status is unavailable. Open the official status page for details.';
+        ? language.value === 'es' ? 'Reportes públicos para ' + (regionFilter.value || 'todas las regiones') + '. La disponibilidad regional varía por servicio.' : 'Public incident reports for ' + (regionFilter.value || 'all regions') + '. Regional availability varies by service.'
+        : t("Atlassian publishes these component states globally.")
+      : t("Component status is unavailable. Open the official status page for details.");
     const table = byId('provider-services');
     table.replaceChildren();
     for (const {title, status: serviceStatus, incidents: related = []} of rows) {
@@ -176,7 +221,7 @@ function renderProviderDetails(incidents, stale) {
       row.insertCell().textContent = title;
       const state = row.insertCell();
       state.className = statusClass(serviceStatus);
-      state.textContent = '● ' + serviceStatus;
+      state.textContent = '● ' + t(serviceStatus);
       const details = row.insertCell();
       for (const incident of related) {
         const trigger = document.createElement('button');
@@ -201,9 +246,9 @@ function render() {
   const visible = incidents.filter(incident => matchesRegion(incident, regionFilter.value) &&
     (!statusFilter.value || incident.status === statusFilter.value));
   byId('active-count').textContent = snapshot && !stale ? incidents.length : '—';
-  byId('freshness').textContent = snapshot ? new Date(snapshot.checkedAt).toLocaleString() : '—';
-  byId('feed-state').textContent = stale ? 'Desactualizado' : snapshot ? 'Actualizado' : fetchFailed ? 'Sin datos' : 'Consultando';
-  byId('brief-text').textContent = stale
+  byId('freshness').textContent = snapshot ? new Date(snapshot.checkedAt).toLocaleString(language.value === 'es' ? 'es' : 'en') : '—';
+  byId('feed-state').textContent = language.value === 'es' ? (stale ? 'Desactualizado' : snapshot ? 'Actualizado' : fetchFailed ? 'Sin datos' : 'Consultando') : (stale ? 'Out of date' : snapshot ? 'Updated' : fetchFailed ? 'Unavailable' : 'Checking');
+  byId('brief-text').textContent = language.value === 'en' ? (stale ? 'The last reading has expired.' : snapshot ? (incidents.length ? 'Google Cloud reports ' + incidents.length + ' active public incident(s).' : 'Google Cloud reports no active public incidents.') : 'Google Cloud status is not yet available.') : stale
     ? 'Datos desactualizados. Se conserva la última lectura disponible.'
     : snapshot
       ? (incidents.length ? 'Google Cloud informa ' + incidents.length + ' incidente(s) público(s) activo(s).' : 'Sin incidentes públicos activos en Google Cloud.')
@@ -229,17 +274,17 @@ function render() {
     products.className = 'muted';
     products.textContent = incident.products.join(', ');
     incidentCell.append(products);
-    row.insertCell().textContent = incident.locations.map(({ title }) => title).join(', ') || 'Not reported';
+    row.insertCell().textContent = incident.locations.map(({ title }) => title).join(', ') || t("Not reported");
     const state = row.insertCell();
-    state.textContent = incident.status;
+    state.textContent = t(incident.status);
     state.className = incident.status.toLowerCase();
-    row.insertCell().textContent = new Date(incident.updatedAt).toLocaleString();
+    row.insertCell().textContent = new Date(incident.updatedAt).toLocaleString(language.value === 'es' ? 'es' : 'en');
   }
 
-  byId('result').textContent = visible.length ? visible.length + ' public incident(s) in view'
-    : stale ? 'No matching incidents in the last available snapshot.'
-    : !snapshot ? (fetchFailed ? 'Public incident data unavailable.' : 'Loading public incident data…')
-    : incidents.length ? 'No incidents match these filters.' : 'No active public incidents reported.';
+  byId('result').textContent = visible.length ? visible.length + ' ' + t('public incident(s) in view')
+    : stale ? t("No matching incidents in the last available snapshot.")
+    : !snapshot ? (fetchFailed ? t("Public incident data unavailable.") : t("Loading public incident data…"))
+    : incidents.length ? t("No incidents match these filters.") : t("No active public incidents reported.");
 
   for (const { code, name, marker } of markers) {
     const status = stale || !snapshot ? 'Unknown' : priority.find(value =>
@@ -247,14 +292,14 @@ function render() {
     ) || (incidents.some(incident => !incident.locations.length) ? 'Unknown' : 'No public incidents reported for this region');
     marker.className = 'region-marker ' + (priority.includes(status) ? status.toLowerCase() : 'operational');
     marker.textContent = '● ' + code;
-    marker.setAttribute('aria-label', name + ' — ' + status);
+    marker.setAttribute('aria-label', name + ' — ' + t(status));
     marker.setAttribute('aria-pressed', String(regionFilter.value === code));
   }
 }
 
 async function refresh() {
   try {
-    const response = await fetch('./status.json?v=0.2.5', { cache: 'no-store', signal: AbortSignal.timeout(10000) });
+    const response = await fetch('./status.json?v=0.2.6', { cache: 'no-store', signal: AbortSignal.timeout(10000) });
     if (!response.ok) throw new Error('Status snapshot unavailable');
     const latest = await response.json();
     if (!Array.isArray(latest.incidents) || !Number.isFinite(Date.parse(latest.checkedAt))) {

@@ -8,12 +8,33 @@
 <link rel="icon" href="./icon-192.png">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <link rel="manifest" href="./manifest.webmanifest">
-<link rel="stylesheet" href="./styles.css?v=0.2.5">
-<script src="./app.js?v=0.2.5" defer></script>
+<link rel="stylesheet" href="./styles.css?v=0.2.6">
+<script src="./app.js?v=0.2.6" defer></script>
 </head>
 <body>
-<header><div class="identity"><div class="logo" aria-hidden="true">G</div><div><h1>Global Command Center</h1><p>Operations intelligence</p></div></div><p class="demo">v0.2.5 · Public service health</p></header>
+<header><div class="identity"><div class="logo" aria-hidden="true">G</div><div><h1>Global Command Center</h1><p>Operations intelligence</p></div></div><p class="demo">v0.2.6 · <span>Public service health</span></p><div class="preferences"><div class="theme-control" role="group" aria-label="Theme"><button type="button" data-theme-choice="light">Light</button><button type="button" data-theme-choice="dark">Dark</button><button type="button" data-theme-choice="system">System</button></div><label><span>Language</span><select id="language"><option value="en">English</option><option value="es">Español</option></select></label></div></header>
 <main>
+<div class="layout">
+<section class="panel" aria-labelledby="map-title">
+<h2 id="map-title">Global service health</h2>
+<p class="muted">Select a region to filter the service matrix.</p>
+<div class="map" id="map" aria-label="Schematic world map">
+<span class="land americas" aria-hidden="true"></span>
+<span class="land eurasia" aria-hidden="true"></span>
+<span class="land africa" aria-hidden="true"></span>
+<span class="land australia" aria-hidden="true"></span>
+</div>
+<div class="legend" aria-label="Status legend">
+<span class="operational">● No public incidents</span><span class="advisory">● Advisory</span><span class="degraded">● Degraded</span><span class="outage">● Outage</span><span class="unknown">● Unknown</span>
+</div>
+</section>
+<section class="panel brief" aria-labelledby="brief-title">
+<h2 id="brief-title">Resumen ejecutivo</h2>
+<p id="feed-state" aria-live="polite">Consultando</p>
+<p class="muted" id="brief-text"></p>
+<article><h3>Fuentes</h3><p><a href="https://status.cloud.google.com/">Google Cloud Service Health</a></p></article>
+</section>
+</div>
 <section class="panel" aria-labelledby="platform-status-title">
 <div class="matrix-head"><h2 id="platform-status-title">Cloud &amp; Telecom Service Health</h2>
 <div class="filters"><label>Region<select id="region"><option value="">All regions</option></select></label></div></div>
@@ -33,34 +54,14 @@
 <div><p>Active public incidents</p><strong id="active-count">—</strong></div>
 <div><p>Last successful check · local time</p><strong id="freshness">—</strong></div>
 </section>
-<div class="layout">
-<section class="panel" aria-labelledby="map-title">
-<h2 id="map-title">Global service health</h2>
-<p class="muted">Select a region to filter the service matrix.</p>
-<div class="map" id="map" aria-label="Schematic world map">
-<span class="land americas" aria-hidden="true"></span>
-<span class="land eurasia" aria-hidden="true"></span>
-<span class="land africa" aria-hidden="true"></span>
-<span class="land australia" aria-hidden="true"></span>
-</div>
-<div class="legend" aria-label="Status legend">
-<span class="operational">● No public incidents</span><span class="advisory">● Advisory</span><span class="degraded">● Degraded</span><span class="outage">● Outage</span><span class="unknown">● Unknown</span>
-</div>
-</section>
-<section class="panel brief" lang="es" aria-labelledby="brief-title">
-<h2 id="brief-title">Resumen ejecutivo</h2>
-<p id="feed-state" aria-live="polite">Consultando</p>
-<p class="muted" id="brief-text"></p>
-<article><h3>Fuentes</h3><p><a href="https://status.cloud.google.com/">Google Cloud Service Health</a></p></article>
-</section>
-</div>
+
 <section class="panel matrix" id="google-incidents" aria-labelledby="matrix-title" hidden>
 <div class="matrix-head"><h2 id="matrix-title">Google Cloud public incidents</h2>
 <div class="filters"><label>Status<select id="status"><option value="">All statuses</option><option>Advisory</option><option>Degraded</option><option>Outage</option><option>Unknown</option></select></label></div></div>
 <p class="muted" id="result" aria-live="polite"></p><p class="muted">Select an incident when one appears to see the latest provider update.</p>
 <div class="table-wrap"><table aria-label="Public service incidents"><thead><tr><th scope="col">Incident / products</th><th scope="col">Region</th><th scope="col">Status</th><th scope="col">Updated · local time</th></tr></thead><tbody id="services"></tbody></table></div>
 </section>
-<section class="panel" lang="es" aria-labelledby="risk-title">
+<section class="panel" aria-labelledby="risk-title">
 <h2 id="risk-title">04 | Business Risk Intelligence</h2>
 <p class="muted">Fuentes de seguimiento para revisión editorial.</p>
 <div class="table-wrap"><table><thead><tr><th scope="col">Categoría</th><th scope="col">Evaluación</th><th scope="col">Fuente</th></tr></thead><tbody>
@@ -71,7 +72,7 @@
 <tr><th scope="row">Energy</th><td>Pendiente de revisión</td><td><a href="https://www.eia.gov/">EIA</a></td></tr>
 <tr><th scope="row">Geopolitics</th><td>Pendiente de revisión</td><td><a href="https://www.reuters.com/world/">Reuters World</a></td></tr>
 </tbody></table></div></section>
-<section class="panel brief" lang="es" aria-labelledby="action-title">
+<section class="panel brief" aria-labelledby="action-title">
 <h2 id="action-title">05 | Executive Action Center</h2>
 <article><h3>P1 | Critical Response</h3><p>Evaluar activación cuando se confirme un incidente crítico y su impacto operativo.</p></article>
 <article><h3>P2 | Telecom &amp; Contact Center</h3><p>Telecom Operations · Validar llamadas entrantes, IVR, colas y disponibilidad de agentes.</p></article>

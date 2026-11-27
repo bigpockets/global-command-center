@@ -47,3 +47,20 @@ a{color:#8acaff}
 .health-matrix td button{background:none;border:1px solid transparent;border-radius:5px;cursor:pointer;font-size:18px;min-width:38px;min-height:34px}
 .health-matrix td button:hover,.health-matrix td button[aria-expanded=true]{border-color:currentColor}
 .health-matrix th[scope=row]{color:inherit;text-align:left}
+:root{--canvas:#091321;--text:#eaf2fc;--surface:#0e1a2a;--control:#111e30;--fine:#314059;--link:#8acaff;--selected:#1b3954;--muted:#a9bbd1;--panel:var(--surface);--border:var(--fine);--ok:#64e6af;--warn:#ffcf71;--bad:#ff8b98;--info:#8acaff;--gray:#b5c2d6}
+:root[data-theme=light]{color-scheme:light;--canvas:#edf2f7;--text:#12243a;--surface:#fff;--control:#f3f7fc;--fine:#cad6e4;--link:#07598d;--selected:#d8eafb;--muted:#465d76;--ok:#087452;--warn:#895400;--bad:#ae213c;--info:#07598d;--gray:#52657d}
+@media(prefers-color-scheme:light){:root:not([data-theme=dark]){color-scheme:light;--canvas:#edf2f7;--text:#12243a;--surface:#fff;--control:#f3f7fc;--fine:#cad6e4;--link:#07598d;--selected:#d8eafb;--muted:#465d76;--ok:#087452;--warn:#895400;--bad:#ae213c;--info:#07598d;--gray:#52657d}}
+:root{background:var(--canvas);color:var(--text)}
+header,main{max-width:1440px}header{padding-block:24px}.identity h1{letter-spacing:-.045em}
+.panel,.summary div{border-radius:10px;background:var(--surface);border-color:var(--fine)}
+.layout{grid-template-columns:minmax(0,1.8fr) minmax(0,1fr)} .map{max-height:360px;aspect-ratio:2.4}
+.preferences,.theme-control,.preferences label{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.preferences label{font-size:13px;color:var(--muted)}
+.theme-control{border:1px solid var(--fine);border-radius:8px;padding:3px;background:var(--control)}
+.theme-control button{font:inherit;font-size:13px;color:var(--text);background:none;border:0;border-radius:5px;padding:7px 10px;cursor:pointer}
+.theme-control button[aria-pressed=true]{background:var(--selected);font-weight:700}
+select,.detail-header button{color:var(--text);background:var(--control);border-color:var(--fine)}
+a,.incident-trigger{color:var(--link)} .operational{color:var(--ok)}.degraded{color:var(--warn)}.outage{color:var(--bad)}.advisory{color:var(--info)}.unknown{color:var(--gray)}
+.health-matrix td button{font-size:28px;min-width:48px;min-height:48px}.region-marker{background:var(--surface);font-size:15px;min-height:44px;padding:8px 12px}
+.region-marker[aria-pressed=true]{box-shadow:0 0 0 2px var(--info)} .incident-row:hover,.incident-row:focus-within{background:var(--selected)}
+@media(max-width:760px){.layout{grid-template-columns:1fr}.preferences{width:100%}.health-matrix td button{min-width:44px}}
