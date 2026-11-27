@@ -1,6 +1,6 @@
 const cachePrefix = 'gcc-demo:' + self.registration.scope + ':';
-const cacheName = cachePrefix + '7';
-const assets = ['./', './index.html', './styles.css?v=0.2.4', './app.js?v=0.2.4', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
+const cacheName = cachePrefix + '8';
+const assets = ['./', './index.html', './styles.css?v=0.2.5', './app.js?v=0.2.5', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(assets)).then(() => self.skipWaiting()));

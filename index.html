@@ -8,16 +8,16 @@
 <link rel="icon" href="./icon-192.png">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <link rel="manifest" href="./manifest.webmanifest">
-<link rel="stylesheet" href="./styles.css?v=0.2.4">
-<script src="./app.js?v=0.2.4" defer></script>
+<link rel="stylesheet" href="./styles.css?v=0.2.5">
+<script src="./app.js?v=0.2.5" defer></script>
 </head>
 <body>
-<header><div class="identity"><div class="logo" aria-hidden="true">G</div><div><h1>Global Command Center</h1><p>Operations intelligence</p></div></div><p class="demo">v0.2.4 · Public service health</p></header>
+<header><div class="identity"><div class="logo" aria-hidden="true">G</div><div><h1>Global Command Center</h1><p>Operations intelligence</p></div></div><p class="demo">v0.2.5 · Public service health</p></header>
 <main>
 <section class="panel" aria-labelledby="platform-status-title">
-<div class="matrix-head"><h2 id="platform-status-title">Provider overview</h2>
+<div class="matrix-head"><h2 id="platform-status-title">Cloud &amp; Telecom Service Health</h2>
 <div class="filters"><label>Region<select id="region"><option value="">All regions</option></select></label></div></div>
-<div id="provider-cards" class="provider-cards"></div>
+<div class="table-wrap health-matrix"><table><thead><tr><th scope="col">Service</th><th scope="col">AMER</th><th scope="col">EMEA</th><th scope="col">APAC</th></tr></thead><tbody id="provider-cards"></tbody></table></div>
 <p class="muted provider-scope">Green indicates no reported public issues. Gray indicates unverified status. Global-only reports are labeled.</p>
 </section>
 <section class="panel" id="provider-detail" aria-labelledby="provider-detail-title" hidden>
@@ -51,7 +51,7 @@
 <h2 id="brief-title">Resumen ejecutivo</h2>
 <p id="feed-state" aria-live="polite">Consultando</p>
 <p class="muted" id="brief-text"></p>
-<article><h3>Fuentes</h3><p><a href="https://status.cloud.google.com/">Google Cloud Service Health</a></p><p><a href="https://riainternal.statuspage.io/" target="_blank" rel="noopener noreferrer">Ria Statuspage</a> · Requiere iniciar sesión con Microsoft.</p></article>
+<article><h3>Fuentes</h3><p><a href="https://status.cloud.google.com/">Google Cloud Service Health</a></p></article>
 </section>
 </div>
 <section class="panel matrix" id="google-incidents" aria-labelledby="matrix-title" hidden>
@@ -59,6 +59,24 @@
 <div class="filters"><label>Status<select id="status"><option value="">All statuses</option><option>Advisory</option><option>Degraded</option><option>Outage</option><option>Unknown</option></select></label></div></div>
 <p class="muted" id="result" aria-live="polite"></p><p class="muted">Select an incident when one appears to see the latest provider update.</p>
 <div class="table-wrap"><table aria-label="Public service incidents"><thead><tr><th scope="col">Incident / products</th><th scope="col">Region</th><th scope="col">Status</th><th scope="col">Updated · local time</th></tr></thead><tbody id="services"></tbody></table></div>
+</section>
+<section class="panel" lang="es" aria-labelledby="risk-title">
+<h2 id="risk-title">04 | Business Risk Intelligence</h2>
+<p class="muted">Fuentes de seguimiento para revisión editorial.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Categoría</th><th scope="col">Evaluación</th><th scope="col">Fuente</th></tr></thead><tbody>
+<tr><th scope="row">Cybersecurity</th><td>Pendiente de revisión</td><td><a href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog">CISA</a></td></tr>
+<tr><th scope="row">Compliance / FinCEN</th><td>Pendiente de revisión</td><td><a href="https://www.fincen.gov/news-room">FinCEN</a></td></tr>
+<tr><th scope="row">FAA / Aviation</th><td>Pendiente de revisión</td><td><a href="https://nasstatus.faa.gov/">FAA</a></td></tr>
+<tr><th scope="row">Financial Markets</th><td>Pendiente de revisión</td><td><a href="https://www.nyse.com/markets/hours-calendars">NYSE</a></td></tr>
+<tr><th scope="row">Energy</th><td>Pendiente de revisión</td><td><a href="https://www.eia.gov/">EIA</a></td></tr>
+<tr><th scope="row">Geopolitics</th><td>Pendiente de revisión</td><td><a href="https://www.reuters.com/world/">Reuters World</a></td></tr>
+</tbody></table></div></section>
+<section class="panel brief" lang="es" aria-labelledby="action-title">
+<h2 id="action-title">05 | Executive Action Center</h2>
+<article><h3>P1 | Critical Response</h3><p>Evaluar activación cuando se confirme un incidente crítico y su impacto operativo.</p></article>
+<article><h3>P2 | Telecom &amp; Contact Center</h3><p>Telecom Operations · Validar llamadas entrantes, IVR, colas y disponibilidad de agentes.</p></article>
+<article><h3>P2 | Infrastructure &amp; Security</h3><p>Systems, Network &amp; InfoSec · Corroborar la disponibilidad con telemetría interna y revisar alertas de seguridad.</p></article>
+<article><h3>P3 | Change Management</h3><p>Infrastructure Leadership · Evaluar si corresponde posponer cambios no esenciales durante períodos de alta demanda.</p></article>
 </section>
 </main>
 <dialog id="incident-detail" aria-labelledby="detail-title">

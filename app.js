@@ -64,7 +64,9 @@ function openIncident(incident, trigger) {
 
 const providers = [
   { id: 'google', title: 'Google Cloud', url: 'https://status.cloud.google.com/', scope: 'Regional incident reports' },
-  { id: 'webex', title: 'Webex', url: 'https://status.webex.com/', scope: 'Feed pending' },
+  ...['Contact Center', 'Calling', 'Meetings', 'Messaging'].map(service => ({
+    id: 'webex-' + service, title: 'Webex ' + service, url: 'https://status.webex.com/', scope: 'Feed pending'
+  })),
   { id: 'aws', title: 'AWS', url: 'https://health.aws.amazon.com/health/status', scope: 'Feed pending' },
   { id: 'azure', title: 'Azure', url: 'https://azure.status.microsoft/en-us/status', scope: 'Feed pending' },
   { id: 'm365', title: 'Microsoft 365', url: 'https://status.cloud.microsoft/m365', scope: 'Organization access required' },
@@ -96,38 +98,66 @@ function googleRows(incidents, stale) {
   });
 }
 
+const statusForRegion = (provider, code, incidents, stale) => {
+  if (stale || !snapshot) return 'Unknown';
+  if (provider.id === 'jira' && !code) return snapshot.jira?.status || 'Unknown';
+  if (provider.id !== 'google' || !snapshot.services?.length) return 'Unknown';
+  const relevant = incidents.filter(incident => matchesRegion(incident, code));
+  return priority.find(level => relevant.some(incident => incident.status === level))
+    || (code && incidents.some(incident => !incident.locations.length) ? 'Unknown' : clear);
+};
+
 const cards = providers.map(provider => {
+  const row = byId('provider-cards').insertRow();
+  const header = document.createElement('th');
+  header.scope = 'row';
   const button = document.createElement('button');
   button.type = 'button';
+  button.className = 'incident-trigger';
+  button.textContent = provider.title;
   button.setAttribute('aria-controls', 'provider-detail');
-  const label = document.createElement('strong');
-  label.textContent = provider.title;
-  const badge = document.createElement('span');
+  header.append(button);
   const scope = document.createElement('small');
+  scope.className = 'muted';
   scope.textContent = provider.scope;
-  button.append(label, badge, scope);
-  button.addEventListener('click', () => {
-    selectedProvider = selectedProvider === provider.id ? undefined : provider.id;
+  header.append(scope);
+  row.append(header);
+  function select(code) {
+    if (selectedProvider === provider.id && regionFilter.value === code) {
+      selectedProvider = undefined;
+    } else {
+      selectedProvider = provider.id;
+      regionFilter.value = code;
+    }
     render();
+  }
+  button.addEventListener('click', () => select(provider.id === 'jira' ? '' : regionFilter.value));
+  const regional = regions.map(({code}) => {
+    const indicator = document.createElement('button');
+    indicator.type = 'button';
+    indicator.textContent = '●';
+    indicator.setAttribute('aria-controls', 'provider-detail');
+    indicator.addEventListener('click', () => select(code));
+    row.insertCell().append(indicator);
+    return {code, indicator};
   });
-  byId('provider-cards').append(button);
-  return { provider, button, badge };
+  return { provider, button, scope, regional };
 });
 
 function renderProviderDetails(incidents, stale) {
-  for (const {provider, button, badge} of cards) {
+  for (const {provider, button, scope, regional} of cards) {
     const google = provider.id === 'google';
     const jira = provider.id === 'jira';
     const rows = google ? googleRows(incidents, stale) :
       jira ? (snapshot?.jira?.services || []).map(row => ({...row, status: stale ? 'Unknown' : row.status})) : [];
-    const relevantIncidents = google && !stale
-      ? incidents.filter(item => matchesRegion(item, regionFilter.value)) : [];
-    const highest = priority.find(level => rows.some(row => row.status === level) ||
-      relevantIncidents.some(item => item.status === level));
-    const status = jira && !stale ? snapshot?.jira?.status || 'Unknown' :
-      highest || (rows.length ? clear : 'Unknown');
-    badge.className = statusClass(status);
-    badge.textContent = '● ' + status;
+    scope.textContent = jira ? 'Global · ' + statusForRegion(provider, '', incidents, stale) : provider.scope;
+    for (const {code, indicator} of regional) {
+      const status = statusForRegion(provider, code, incidents, stale);
+      indicator.className = statusClass(status);
+      indicator.title = provider.title + ' · ' + code + ' · ' + status;
+      indicator.setAttribute('aria-label', indicator.title);
+      indicator.setAttribute('aria-expanded', String(selectedProvider === provider.id && regionFilter.value === code));
+    }
     const expanded = selectedProvider === provider.id;
     button.setAttribute('aria-expanded', String(expanded));
     if (!expanded) continue;
@@ -170,7 +200,7 @@ function render() {
   const stale = snapshot && (fetchFailed || Date.now() - Date.parse(snapshot.checkedAt) > 75 * 60 * 1000);
   const visible = incidents.filter(incident => matchesRegion(incident, regionFilter.value) &&
     (!statusFilter.value || incident.status === statusFilter.value));
-  byId('active-count').textContent = snapshot ? incidents.length : '—';
+  byId('active-count').textContent = snapshot && !stale ? incidents.length : '—';
   byId('freshness').textContent = snapshot ? new Date(snapshot.checkedAt).toLocaleString() : '—';
   byId('feed-state').textContent = stale ? 'Desactualizado' : snapshot ? 'Actualizado' : fetchFailed ? 'Sin datos' : 'Consultando';
   byId('brief-text').textContent = stale
@@ -224,7 +254,7 @@ function render() {
 
 async function refresh() {
   try {
-    const response = await fetch('./status.json', { cache: 'no-store', signal: AbortSignal.timeout(10000) });
+    const response = await fetch('./status.json?v=0.2.5', { cache: 'no-store', signal: AbortSignal.timeout(10000) });
     if (!response.ok) throw new Error('Status snapshot unavailable');
     const latest = await response.json();
     if (!Array.isArray(latest.incidents) || !Number.isFinite(Date.parse(latest.checkedAt))) {
