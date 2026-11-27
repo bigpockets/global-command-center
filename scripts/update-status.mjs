@@ -12,6 +12,18 @@ if (!Array.isArray(feed) || feed.some(item => !item || typeof item.id !== 'strin
   throw new Error('Unexpected Google Cloud feed format');
 }
 
+const catalogUrl = process.argv[4] || new URL('/products.json', source).href;
+const catalogResponse = await fetch(catalogUrl, { signal: AbortSignal.timeout(20000) });
+if (!catalogResponse.ok) throw new Error('Google Cloud catalog returned HTTP ' + catalogResponse.status);
+const catalog = await catalogResponse.json();
+const entries = Array.isArray(catalog) ? catalog : catalog?.products;
+if (!Array.isArray(entries) || !entries.length || entries.some(product =>
+  typeof product?.id !== 'string' || typeof product?.title !== 'string')) {
+  throw new Error('Unexpected Google Cloud product catalog format');
+}
+const services = [...new Map(entries.map(({ id, title }) => [id, { id, title }])).values()]
+  .sort((a, b) => a.title.localeCompare(b.title));
+
 const textValues = (items, pick) => [...new Set(
   (Array.isArray(items) ? items : []).map(pick).filter(value => typeof value === 'string' && value.trim())
 )];
@@ -24,6 +36,7 @@ const incidents = feed.filter(item => !item.end).map(item => {
   const statuses = { SERVICE_OUTAGE: 'Outage', SERVICE_DISRUPTION: 'Degraded', SERVICE_INFORMATION: 'Advisory' };
   return {
     products: products.length ? products : [item.service_name || 'Google Cloud'],
+    productIds: textValues(item.affected_products, product => product?.id),
     locations,
     status: statuses[impact] || 'Unknown',
     summary: item.external_desc || 'Google Cloud incident',
@@ -35,6 +48,6 @@ const incidents = feed.filter(item => !item.end).map(item => {
   };
 }).sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
 
-await writeFile(target, JSON.stringify({ checkedAt: new Date().toISOString(), incidents }, null, 2) + '\n');
+await writeFile(target, JSON.stringify({ checkedAt: new Date().toISOString(), incidents, services }, null, 2) + '\n');
 console.log('Published snapshot with ' + incidents.length + ' active public incident(s).');
 
