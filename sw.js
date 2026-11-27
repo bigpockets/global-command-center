@@ -1,9 +1,9 @@
 const cachePrefix = 'gcc-demo:' + self.registration.scope + ':';
-const cacheName = cachePrefix + '1';
+const cacheName = cachePrefix + '2';
 const assets = ['./', './index.html', './styles.css', './app.js', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(assets)));
+  event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(assets)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', event => {
@@ -14,6 +14,7 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET' || !event.request.url.startsWith(self.registration.scope)) return;
+  if (new URL(event.request.url).pathname.endsWith('/status.json')) return;
   if (event.request.mode === 'navigate') {
     event.respondWith(fetch(event.request).catch(() =>
       caches.open(cacheName).then(cache => cache.match('./index.html'))

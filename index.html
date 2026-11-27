@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#101a29">
-<title>Global Command Center · Demo</title>
+<title>Global Command Center</title>
 <link rel="icon" href="./icon-192.png">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <link rel="manifest" href="./manifest.webmanifest">
@@ -12,13 +12,11 @@
 <script src="./app.js" defer></script>
 </head>
 <body>
-<header><div class="identity"><div class="logo" aria-hidden="true">G</div><div><h1>Global Command Center</h1><p>Operations intelligence</p></div></div><p class="demo">MVP v0.1 · Demo data</p></header>
+<header><div class="identity"><div class="logo" aria-hidden="true">G</div><div><h1>Global Command Center</h1><p>Operations intelligence</p></div></div><p class="demo">v0.2 · Public service health</p></header>
 <main>
 <section class="summary" aria-label="Executive overview">
-<div><p>Global risk</p><strong class="degraded">Moderate</strong></div>
-<div><p>Business impact</p><strong>Limited</strong></div>
-<div><p>Operational in view</p><strong class="operational" id="healthy">—</strong></div>
-<div><p>Disrupted in view</p><strong class="outage" id="disrupted">—</strong></div>
+<div><p>Active public incidents</p><strong id="active-count">—</strong></div>
+<div><p>Last successful check · local time</p><strong id="freshness">—</strong></div>
 </section>
 <div class="layout">
 <section class="panel" aria-labelledby="map-title">
@@ -31,22 +29,22 @@
 <span class="land australia" aria-hidden="true"></span>
 </div>
 <div class="legend" aria-label="Status legend">
-<span class="operational">● Operational</span><span class="degraded">● Degraded</span><span class="outage">● Outage</span><span class="unknown">● Unknown</span>
+<span class="advisory">● Advisory</span><span class="degraded">● Degraded</span><span class="outage">● Outage</span><span class="unknown">● Unknown</span>
 </div>
 </section>
 <section class="panel brief" lang="es" aria-labelledby="brief-title">
 <h2 id="brief-title">Resumen ejecutivo</h2>
-<p class="muted">Escenario simulado. Todos los estados e incidentes son ficticios.</p>
-<article><span class="outage">AMER · P1</span><h3>Webex Contact Center</h3><p>Validar el desvío de llamadas y la continuidad de atención al cliente.</p></article>
-<article><span class="degraded">EMEA · P2</span><h3>Microsoft Azure</h3><p>Revisar las aplicaciones con mayor latencia y confirmar el impacto operativo.</p></article>
+<p id="feed-state" aria-live="polite">Consultando</p>
+<p class="muted" id="brief-text"></p>
+<article><h3>Fuentes</h3><p><a href="https://status.cloud.google.com/">Google Cloud Service Health</a></p><p class="unknown">AWS, Azure, Microsoft 365 y Webex pendientes de conexión.</p></article>
 </section>
 </div>
 <section class="panel matrix" aria-labelledby="matrix-title">
-<div class="matrix-head"><h2 id="matrix-title">Critical services matrix</h2>
+<div class="matrix-head"><h2 id="matrix-title">Google Cloud public incidents</h2>
 <div class="filters"><label>Region<select id="region"><option value="">All regions</option></select></label>
-<label>Status<select id="status"><option value="">All statuses</option><option>Operational</option><option>Degraded</option><option>Outage</option><option>Unknown</option></select></label></div></div>
+<label>Status<select id="status"><option value="">All statuses</option><option>Advisory</option><option>Degraded</option><option>Outage</option><option>Unknown</option></select></label></div></div>
 <p class="muted" id="result" aria-live="polite"></p>
-<div class="table-wrap"><table aria-label="Service availability"><thead><tr><th scope="col">Service</th><th scope="col">Region</th><th scope="col">Status</th></tr></thead><tbody id="services"></tbody></table></div>
+<div class="table-wrap"><table aria-label="Public service incidents"><thead><tr><th scope="col">Incident / products</th><th scope="col">Region</th><th scope="col">Status</th><th scope="col">Updated · local time</th></tr></thead><tbody id="services"></tbody></table></div>
 </section>
 </main>
 </body>

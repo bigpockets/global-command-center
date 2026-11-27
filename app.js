@@ -3,72 +3,103 @@ const regions = [
   { code: 'EMEA', name: 'Europe, Middle East & Africa', x: 50, y: 38 },
   { code: 'APAC', name: 'Asia Pacific', x: 79, y: 48 }
 ];
-const services = [
-  ['Microsoft 365', 'AMER', 'Operational'],
-  ['Microsoft Azure', 'EMEA', 'Degraded'],
-  ['AWS', 'AMER', 'Operational'],
-  ['AWS', 'EMEA', 'Operational'],
-  ['Google Cloud', 'APAC', 'Operational'],
-  ['Microsoft 365', 'APAC', 'Operational'],
-  ['Webex Meetings', 'EMEA', 'Operational'],
-  ['Webex Contact Center', 'AMER', 'Outage'],
-  ['Webex Calling', 'APAC', 'Unknown']
-];
-const severity = ['Operational', 'Unknown', 'Degraded', 'Outage'];
-const regionFilter = document.querySelector('#region');
-const statusFilter = document.querySelector('#status');
-const matrix = document.querySelector('#services');
+const prefixes = { AMER: /^(us|northamerica|southamerica)-/, EMEA: /^(europe|me|africa)-/, APAC: /^(asia|australia)-/ };
+const priority = ['Outage', 'Degraded', 'Advisory', 'Unknown'];
+const byId = id => document.getElementById(id);
+const regionFilter = byId('region');
+const statusFilter = byId('status');
+const matrix = byId('services');
+let snapshot;
+let fetchFailed = false;
 
 const markers = regions.map(({ code, name, x, y }) => {
-  const option = document.createElement('option');
-  option.value = code;
-  option.textContent = code;
-  regionFilter.append(option);
-
-  const regionalStatuses = services.filter(row => row[1] === code).map(row => row[2]);
-  const regionalStatus = severity.findLast(status => regionalStatuses.includes(status));
+  regionFilter.add(new Option(code, code));
   const marker = document.createElement('button');
   marker.type = 'button';
-  marker.className = 'region-marker ' + regionalStatus.toLowerCase();
-  marker.textContent = '● ' + code;
-  marker.setAttribute('aria-label', name + ' — ' + regionalStatus);
   marker.style.left = x + '%';
   marker.style.top = y + '%';
   marker.addEventListener('click', () => {
     regionFilter.value = regionFilter.value === code ? '' : code;
     render();
   });
-  document.querySelector('#map').append(marker);
-  return { code, marker };
+  byId('map').append(marker);
+  return { code, name, marker };
 });
 
+function matchesRegion(incident, code) {
+  return !code || incident.locations.some(({ id }) => id === 'global' || prefixes[code].test(id));
+}
+
 function render() {
-  const visible = services.filter(([, region, status]) =>
-    (!regionFilter.value || region === regionFilter.value) &&
-    (!statusFilter.value || status === statusFilter.value)
-  );
+  const incidents = snapshot?.incidents ?? [];
+  const stale = snapshot && (fetchFailed || Date.now() - Date.parse(snapshot.checkedAt) > 75 * 60 * 1000);
+  const visible = incidents.filter(incident => matchesRegion(incident, regionFilter.value) &&
+    (!statusFilter.value || incident.status === statusFilter.value));
+  byId('active-count').textContent = snapshot ? incidents.length : '—';
+  byId('freshness').textContent = snapshot ? new Date(snapshot.checkedAt).toLocaleString() : '—';
+  byId('feed-state').textContent = stale ? 'Desactualizado' : snapshot ? 'Actualizado' : fetchFailed ? 'Sin datos' : 'Consultando';
+  byId('brief-text').textContent = stale
+    ? 'Datos desactualizados. Se conserva la última lectura disponible.'
+    : snapshot
+      ? (incidents.length ? 'Google Cloud informa ' + incidents.length + ' incidente(s) público(s) activo(s).' : 'Sin incidentes públicos activos en Google Cloud.')
+      : (fetchFailed ? 'Todavía no hay una lectura disponible de Google Cloud.' : 'Consultando el estado público de Google Cloud.');
+
   matrix.replaceChildren();
-  for (const [name, region, status] of visible) {
+  for (const incident of visible) {
     const row = matrix.insertRow();
-    row.insertCell().textContent = name;
-    row.insertCell().textContent = region;
+    const link = document.createElement('a');
+    link.href = incident.url;
+    link.textContent = incident.summary;
+    const incidentCell = row.insertCell();
+    incidentCell.append(link);
+    const products = document.createElement('div');
+    products.className = 'muted';
+    products.textContent = incident.products.join(', ');
+    incidentCell.append(products);
+    row.insertCell().textContent = incident.locations.map(({ title }) => title).join(', ') || 'Not reported';
     const state = row.insertCell();
-    state.textContent = '● ' + status;
-    state.className = status.toLowerCase();
+    state.textContent = incident.status;
+    state.className = incident.status.toLowerCase();
+    row.insertCell().textContent = new Date(incident.updatedAt).toLocaleString();
   }
-  document.querySelector('#healthy').textContent = visible.filter(row => row[2] === 'Operational').length;
-  document.querySelector('#disrupted').textContent = visible.filter(row => ['Degraded', 'Outage'].includes(row[2])).length;
-  document.querySelector('#result').textContent = visible.length
-    ? visible.length + ' service records in view'
-    : 'No service records match these filters.';
-  for (const { code, marker } of markers) {
+
+  byId('result').textContent = visible.length ? visible.length + ' public incident(s) in view'
+    : stale ? 'No matching incidents in the last available snapshot.'
+    : !snapshot ? (fetchFailed ? 'Public incident data unavailable.' : 'Loading public incident data…')
+    : incidents.length ? 'No incidents match these filters.' : 'No active public incidents reported.';
+
+  for (const { code, name, marker } of markers) {
+    const status = stale || !snapshot ? 'Unknown' : priority.find(value =>
+      incidents.some(incident => incident.status === value && matchesRegion(incident, code))
+    ) || 'No public incidents reported for this region';
+    marker.className = 'region-marker ' + (priority.includes(status) ? status.toLowerCase() : 'unknown');
+    marker.textContent = '● ' + code;
+    marker.setAttribute('aria-label', name + ' — ' + status);
     marker.setAttribute('aria-pressed', String(regionFilter.value === code));
   }
+}
+
+async function refresh() {
+  try {
+    const response = await fetch('./status.json', { cache: 'no-store', signal: AbortSignal.timeout(10000) });
+    if (!response.ok) throw new Error('Status snapshot unavailable');
+    const latest = await response.json();
+    if (!Array.isArray(latest.incidents) || !Number.isFinite(Date.parse(latest.checkedAt))) {
+      throw new Error('Invalid status snapshot');
+    }
+    snapshot = latest;
+    fetchFailed = false;
+  } catch {
+    fetchFailed = true;
+  }
+  render();
 }
 
 regionFilter.addEventListener('change', render);
 statusFilter.addEventListener('change', render);
 render();
+refresh();
+setInterval(refresh, 5 * 60 * 1000);
 
 if ('serviceWorker' in navigator && ['http:', 'https:'].includes(location.protocol)) {
   navigator.serviceWorker.register('./sw.js').catch(error => console.warn('Offline setup failed', error));
