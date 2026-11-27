@@ -28,7 +28,10 @@ const incidents = feed.filter(item => !item.end).map(item => {
     status: statuses[impact] || 'Unknown',
     summary: item.external_desc || 'Google Cloud incident',
     url: new URL('/incidents/' + encodeURIComponent(item.id), source).href,
-    updatedAt: item.modified || item.begin
+    startedAt: item.begin,
+    updatedAt: item.most_recent_update?.when || item.modified || item.begin,
+    latestUpdate: typeof item.most_recent_update?.text === 'string'
+      ? item.most_recent_update.text.trim() : ''
   };
 }).sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
 
