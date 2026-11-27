@@ -299,13 +299,14 @@ function render() {
 
 async function refresh() {
   try {
-    const response = await fetch('./status.json?v=3.0.0', { cache: 'no-store', signal: AbortSignal.timeout(10000) });
+    const response = await fetch('./status.json?v=3.0.1', { cache: 'no-store', signal: AbortSignal.timeout(10000) });
     if (!response.ok) throw new Error('Status snapshot unavailable');
     const latest = await response.json();
     if (!Array.isArray(latest.incidents) || !Number.isFinite(Date.parse(latest.checkedAt))) {
       throw new Error('Invalid status snapshot');
     }
     snapshot = latest;
+    drawMarket();
     fetchFailed = false;
     try { localStorage.setItem(snapshotKey, JSON.stringify(snapshot)); } catch {
       // Keep the reading in memory when browser storage is unavailable.
@@ -364,11 +365,11 @@ function drawMap() {
 }
 new ResizeObserver(drawMap).observe(mapCanvas);
 const scheme = matchMedia('(prefers-color-scheme: dark)');
-const chart = document.querySelector('tv-mini-chart');
+
 function syncVisuals() {
   const theme = document.documentElement.dataset.theme;
   const dark = theme === 'dark' || (theme === 'system' && scheme.matches);
-  chart.setAttribute('theme', dark ? 'dark' : 'light');
+
   drawMap();
 }
 for (const button of themeButtons) button.addEventListener('click', syncVisuals);
@@ -381,3 +382,67 @@ fetch('https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geo
   })
   .then(data => { if (Array.isArray(data.features)) { land = data; drawMap(); } })
   .catch(() => {});
+
+const marketCanvas = document.getElementById('market-line');
+function drawMarket() {
+  const points = snapshot?.market?.points;
+  const hasPrices = points?.length >= 2;
+  const es = language.value === 'es';
+  marketCanvas.hidden = !hasPrices;
+  byId('market-unavailable').hidden = hasPrices;
+  byId('market-unavailable').textContent = es ? 'Cotización no disponible.' : 'Quote unavailable.';
+  if (!hasPrices) {
+    for (const id of ['market-price','market-change','market-date']) byId(id).textContent = '';
+    return;
+  }
+  const latest = points.at(-1);
+  const prior = snapshot.market.previousClose;
+  const delta = Number.isFinite(prior) && prior > 0 ? latest.price/prior - 1 : null;
+  const locale = es ? 'es' : 'en';
+  byId('market-price').textContent = new Intl.NumberFormat(locale,{style:'currency',currency:'USD'}).format(latest.price);
+  byId('market-change').textContent = delta === null ? '' : new Intl.NumberFormat(locale,{style:'percent',signDisplay:'always',maximumFractionDigits:2}).format(delta);
+  byId('market-change').className = delta < 0 ? 'outage' : 'operational';
+  byId('market-date').textContent = new Intl.DateTimeFormat(locale,{timeZone:'America/New_York',dateStyle:'medium',timeStyle:'short'}).format(latest.at) + ' ET';
+  const {width,height}=marketCanvas.getBoundingClientRect();
+  if (width < 70 || height < 40) return;
+  const ratio=Math.min(devicePixelRatio||1,2);
+  marketCanvas.width=Math.round(width*ratio);
+  marketCanvas.height=Math.round(height*ratio);
+  const ctx=marketCanvas.getContext('2d');
+  ctx.scale(ratio,ratio);
+  const css=getComputedStyle(marketCanvas);
+  const color=css.getPropertyValue(delta < 0 ? '--bad' : '--accent').trim();
+  const values=points.map(p=>p.price);
+  const low=Math.min(...values), high=Math.max(...values);
+  const pad=Math.max((high-low)*0.12,0.02);
+  const w=width-47, h=height-24;
+  const coords=points.map(p=>[4+(p.at-points[0].at)/(latest.at-points[0].at)*w,
+    5+(high+pad-p.price)/(high-low+2*pad)*(h-10)]);
+  ctx.fillStyle=css.getPropertyValue('--muted');
+  ctx.strokeStyle=css.getPropertyValue('--fine');
+  ctx.font='11px system-ui';
+  for(let i=0;i<3;i++){
+    const y=7+i*(h-13)/2;
+    ctx.beginPath();ctx.moveTo(4,y);ctx.lineTo(w+4,y);ctx.stroke();
+    ctx.fillText((high+pad-i*(high-low+2*pad)/2).toFixed(1),w+9,y+4);
+  }
+  ctx.beginPath();
+  coords.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));
+  ctx.strokeStyle=color;ctx.lineWidth=2;ctx.lineJoin='round';ctx.stroke();
+  const [x,y]=coords.at(-1);
+  ctx.lineTo(x,h);ctx.lineTo(coords[0][0],h);ctx.closePath();
+  const area=ctx.createLinearGradient(0,0,0,h);
+  area.addColorStop(0,color+'48');area.addColorStop(1,color+'00');
+  ctx.fillStyle=area;ctx.fill();
+  ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
+  ctx.fillStyle=css.getPropertyValue('--muted');
+  const clock=new Intl.DateTimeFormat(locale,{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit',hour12:false});
+  for(const index of [0,Math.floor(points.length/2),points.length-1]){
+    ctx.fillText(clock.format(points[index].at), Math.min(coords[index][0],w-25),height-3);
+  }
+}
+new ResizeObserver(drawMarket).observe(marketCanvas);
+for(const button of themeButtons) button.addEventListener('click',drawMarket);
+scheme.addEventListener('change',drawMarket);
+language.addEventListener('change',drawMarket);
+drawMarket();

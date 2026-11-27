@@ -82,9 +82,6 @@ header,main{max-width:1512px} header{align-items:center;gap:14px}main{gap:18px}
 .region-marker{z-index:1;min-height:36px;font-size:13px;box-shadow:0 4px 15px #0003}
 .legend{gap:8px 14px;font-size:11px}.summary{gap:18px}.summary div{padding:15px 20px}.summary strong{font-variant-numeric:tabular-nums}
 #market-chart{min-height:0;margin:10px 0;min-width:0}
-tv-mini-chart{display:block;width:100%;height:clamp(174px,19vw,235px);color-scheme:inherit;--tv-white:var(--surface);--tv-black:var(--surface)}
-tv-mini-chart:not(:defined){display:grid;place-items:center;color:var(--muted);border:1px solid var(--fine);border-radius:12px}
-tv-mini-chart::part(tv-chart-bg),tv-mini-chart::part(tv-chart-bg-pane){background:transparent}
 .market-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.market-meta a{font-size:12px}
 .lower-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px;align-items:start}
 .health-matrix tr:hover{background:var(--control)}.health-matrix table{font-variant-numeric:tabular-nums}
@@ -95,3 +92,9 @@ tv-mini-chart::part(tv-chart-bg),tv-mini-chart::part(tv-chart-bg-pane){backgroun
 .radar-mark::before{inset:10px;border:1px solid #80eddd}
 .radar-mark::after{inset:16px;border:1px solid #80eddd80}
 .radar-mark i{inset:6px;background:conic-gradient(from 35deg,#70f4dbee 0deg,#70f4db00 80deg,transparent 81deg);transform:rotate(-74deg)}
+.market-quote{display:flex;align-items:baseline;gap:10px;min-height:26px}
+.market-quote strong{font-size:clamp(21px,3vw,32px);letter-spacing:-.05em;font-variant-numeric:tabular-nums}
+.market-quote span{font-size:13px;font-weight:700}
+#market-line{display:block;width:100%;height:clamp(132px,15vw,192px)}
+#market-line[hidden],#market-unavailable[hidden]{display:none}
+#market-unavailable{padding:38px 0}

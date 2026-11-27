@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#101a29">
 <title>Global Command Center</title>
-<link rel="icon" href="./icon-192.png?v=3.0.0">
-<link rel="apple-touch-icon" href="./icon-192.png?v=3.0.0">
+<link rel="icon" href="./icon-192.png?v=3.0.1">
+<link rel="apple-touch-icon" href="./icon-192.png?v=3.0.1">
 <link rel="manifest" href="./manifest.webmanifest">
-<link rel="stylesheet" href="./styles.css?v=3.0.0">
-<script src="./app.js?v=3.0.0" defer></script>
+<link rel="stylesheet" href="./styles.css?v=3.0.1">
+<script src="./app.js?v=3.0.1" defer></script>
 </head>
 <body>
 <header><div class="identity"><div class="logo radar-mark" aria-hidden="true"><i></i></div><div><h1>Global Command Center</h1><p>Operations intelligence</p></div></div><p class="demo">v3.0 · <span>Public service health</span></p><div class="preferences"><div class="theme-control" role="group" aria-label="Theme"><button type="button" data-theme-choice="light">Light</button><button type="button" data-theme-choice="dark">Dark</button><button type="button" data-theme-choice="system">System</button></div><label><span>Language</span><select id="language"><option value="en">English</option><option value="es">Español</option></select></label></div></header>
@@ -31,9 +31,8 @@
 <section class="panel" aria-labelledby="markets-title">
 <h2 id="markets-title">U.S. market · Intraday</h2>
 <p class="muted">SPY tracks the S&amp;P 500. Quotes may be delayed. Outside market hours, the chart can show the previous session.</p>
-<div id="market-chart"><tv-mini-chart symbol="AMEX:SPY" time-frame="1D" line-chart-type="Area" show-time-scale exportparts="tv-chart-bg,tv-chart-bg-pane"><span>Open SPY on TradingView ↗</span></tv-mini-chart></div>
-<script type="module" src="https://www.tradingview-widget.com/w/en/tv-mini-chart.js"></script>
-<p class="market-meta"><a href="https://www.tradingview.com/symbols/AMEX-SPY/" target="_blank" rel="noopener noreferrer">Open SPY on TradingView ↗</a></p>
+<div id="market-chart"><div class="market-quote"><strong id="market-price"></strong><span id="market-change"></span></div><canvas id="market-line" role="img" aria-label="SPY intraday price" hidden></canvas><p id="market-unavailable" class="muted" role="status"></p><p id="market-date" class="muted"></p></div>
+<p class="market-meta"><a href="https://finance.yahoo.com/quote/SPY/" target="_blank" rel="noopener noreferrer">SPY · Yahoo Finance ↗</a></p>
 </section>
 </div>
 <section class="panel" aria-labelledby="platform-status-title">
