@@ -11,6 +11,16 @@ const statusFilter = byId('status');
 const matrix = byId('services');
 let snapshot;
 let fetchFailed = false;
+const snapshotKey = 'gcc-public-health-v022';
+try {
+  const cached = JSON.parse(localStorage.getItem(snapshotKey));
+  if (cached && Array.isArray(cached.incidents) && Array.isArray(cached.services)) {
+    snapshot = cached;
+    fetchFailed = true;
+  }
+} catch {
+  // The dashboard can operate without browser storage.
+}
 
 const markers = regions.map(({ code, name, x, y }) => {
   regionFilter.add(new Option(code, code));
@@ -52,6 +62,46 @@ function openIncident(incident, trigger) {
   }, { once: true });
 }
 
+function renderServices(incidents, unavailable) {
+  const list = byId('service-status-list');
+  const services = snapshot?.services || [{ id: '', title: 'Google Cloud' }];
+  const fragment = document.createDocumentFragment();
+  const byProduct = new Map();
+  for (const incident of incidents) {
+    for (const id of incident.productIds || []) {
+      if (!byProduct.has(id)) byProduct.set(id, []);
+      byProduct.get(id).push(incident);
+    }
+  }
+  const unassigned = incidents.some(incident => !incident.productIds?.length);
+  for (const {id, title} of services) {
+    const item = document.createElement('li');
+    const heading = document.createElement('strong');
+    heading.textContent = title;
+    item.append(heading);
+    const related = byProduct.get(id) || [];
+    const status = unavailable ? 'Unknown' : priority.find(level => related.some(incident => incident.status === level))
+      || (unassigned ? 'Unknown' : 'No public incidents');
+    const badge = document.createElement('span');
+    badge.className = status === 'No public incidents' ? 'operational' : status.toLowerCase();
+    badge.textContent = '● ' + status;
+    item.append(badge);
+    if (!unavailable) {
+      for (const incident of related) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'incident-trigger';
+        button.textContent = incident.summary;
+        button.setAttribute('aria-haspopup', 'dialog');
+        button.addEventListener('click', () => openIncident(incident, button));
+        item.append(button);
+      }
+    }
+    fragment.append(item);
+  }
+  list.replaceChildren(fragment);
+}
+
 function render() {
   const incidents = snapshot?.incidents ?? [];
   const stale = snapshot && (fetchFailed || Date.now() - Date.parse(snapshot.checkedAt) > 75 * 60 * 1000);
@@ -66,6 +116,7 @@ function render() {
       ? (incidents.length ? 'Google Cloud informa ' + incidents.length + ' incidente(s) público(s) activo(s).' : 'Sin incidentes públicos activos en Google Cloud.')
       : (fetchFailed ? 'Todavía no hay una lectura disponible de Google Cloud.' : 'Consultando el estado público de Google Cloud.');
 
+  renderServices(incidents, stale || !snapshot?.services?.length);
   matrix.replaceChildren();
   for (const incident of visible) {
     const row = matrix.insertRow();
@@ -100,8 +151,8 @@ function render() {
   for (const { code, name, marker } of markers) {
     const status = stale || !snapshot ? 'Unknown' : priority.find(value =>
       incidents.some(incident => incident.status === value && matchesRegion(incident, code))
-    ) || 'No public incidents reported for this region';
-    marker.className = 'region-marker ' + (priority.includes(status) ? status.toLowerCase() : 'unknown');
+    ) || (incidents.some(incident => !incident.locations.length) ? 'Unknown' : 'No public incidents reported for this region');
+    marker.className = 'region-marker ' + (priority.includes(status) ? status.toLowerCase() : 'operational');
     marker.textContent = '● ' + code;
     marker.setAttribute('aria-label', name + ' — ' + status);
     marker.setAttribute('aria-pressed', String(regionFilter.value === code));
@@ -118,6 +169,9 @@ async function refresh() {
     }
     snapshot = latest;
     fetchFailed = false;
+    try { localStorage.setItem(snapshotKey, JSON.stringify(snapshot)); } catch {
+      // Keep the reading in memory when browser storage is unavailable.
+    }
   } catch {
     fetchFailed = true;
   }

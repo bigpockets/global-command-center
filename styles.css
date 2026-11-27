@@ -30,3 +30,7 @@ a{color:#8acaff}
 .detail-fields dt{font-size:13px;color:var(--muted)}
 .detail-fields dd{margin:4px 0 0;overflow-wrap:anywhere}
 .provider-update{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5;margin:8px 0 16px}
+
+.service-status-list{list-style:none;padding:0;margin:16px 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,235px),1fr));gap:10px;max-height:32rem;overflow:auto}
+.service-status-list li{display:grid;align-content:start;gap:5px;padding:12px;border:1px solid var(--border);border-radius:8px;overflow-wrap:anywhere}
+.service-status-list span,.service-status-list button{font-size:13px}
