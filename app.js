@@ -46,9 +46,9 @@ language.addEventListener('change', () => {
 });
 
 const regions = [
-  { code: 'AMER', name: 'Americas', x: 25, y: 42 },
-  { code: 'EMEA', name: 'Europe, Middle East & Africa', x: 50, y: 38 },
-  { code: 'APAC', name: 'Asia Pacific', x: 79, y: 48 }
+  { code: 'AMER', name: 'Americas', x: 23, y: 34 },
+  { code: 'EMEA', name: 'Europe, Middle East & Africa', x: 54, y: 36 },
+  { code: 'APAC', name: 'Asia Pacific', x: 81, y: 52 }
 ];
 const prefixes = { AMER: /^(us|northamerica|southamerica)-/, EMEA: /^(europe|me|africa)-/, APAC: /^(asia|australia)-/ };
 const priority = ['Outage', 'Degraded', 'Advisory', 'Unknown'];
@@ -299,7 +299,7 @@ function render() {
 
 async function refresh() {
   try {
-    const response = await fetch('./status.json?v=0.2.7', { cache: 'no-store', signal: AbortSignal.timeout(10000) });
+    const response = await fetch('./status.json?v=3.0.0', { cache: 'no-store', signal: AbortSignal.timeout(10000) });
     if (!response.ok) throw new Error('Status snapshot unavailable');
     const latest = await response.json();
     if (!Array.isArray(latest.incidents) || !Number.isFinite(Date.parse(latest.checkedAt))) {
@@ -327,33 +327,57 @@ if ('serviceWorker' in navigator && ['http:', 'https:'].includes(location.protoc
 }
 
 
-const colorPreference = matchMedia('(prefers-color-scheme: dark)');
-let marketAppearance;
-function renderMarket() {
-  const container = document.getElementById('market-chart');
-  const theme = document.documentElement.dataset.theme;
-  const dark = theme === 'dark' || (theme === 'system' && colorPreference.matches);
-  const locale = language.value;
-  const appearance = locale + ':' + dark;
-  if (marketAppearance === appearance) return;
-  marketAppearance = appearance;
-  const widget = document.createElement('div');
-  widget.className = 'tradingview-widget-container__widget';
-  const script = document.createElement('script');
-  script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js';
-  script.async = true;
-  script.textContent = JSON.stringify({
-    symbol: 'AMEX:SPY', dateRange: '1D', width: '100%', height: 290,
-    locale, colorTheme: dark ? 'dark' : 'light', isTransparent: true,
-    autosize: false, largeChartUrl: ''
-  });
-  script.addEventListener('error', () => {
-    if (marketAppearance !== appearance) return;
-    widget.textContent = t('Market chart unavailable.');
-  });
-  container.replaceChildren(widget, script);
+const mapCanvas = document.getElementById('world-land');
+const project = (lon, lat) => [(lon + 180) / 360, (82 - lat) / 145];
+let land;
+function drawMap() {
+  if (!land) return;
+  const {width, height} = mapCanvas.getBoundingClientRect();
+  if (!width || !height) return;
+  const ratio = Math.min(devicePixelRatio || 1, 2);
+  mapCanvas.width = Math.round(width * ratio);
+  mapCanvas.height = Math.round(height * ratio);
+  const ctx = mapCanvas.getContext('2d');
+  ctx.scale(ratio, ratio);
+  const css = getComputedStyle(mapCanvas);
+  ctx.fillStyle = css.getPropertyValue('--land-fill');
+  ctx.strokeStyle = css.getPropertyValue('--land-edge');
+  ctx.lineWidth = 0.75;
+  for (const {geometry} of land.features) {
+    if (!geometry) continue;
+    const polygons = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
+    for (const rings of polygons) {
+      ctx.beginPath();
+      for (const ring of rings) {
+        ring.forEach(([lon, lat], i) => {
+          const [x,y] = project(lon,lat);
+          if (i) ctx.lineTo(x * width,y * height);
+          else ctx.moveTo(x * width,y * height);
+        });
+        ctx.closePath();
+      }
+      ctx.fill('evenodd');
+      ctx.stroke();
+    }
+  }
+  mapCanvas.parentElement.classList.add('has-geography');
 }
-colorPreference.addEventListener('change', renderMarket);
-for (const button of themeButtons) button.addEventListener('click', renderMarket);
-language.addEventListener('change', renderMarket);
-renderMarket();
+new ResizeObserver(drawMap).observe(mapCanvas);
+const scheme = matchMedia('(prefers-color-scheme: dark)');
+const chart = document.querySelector('tv-mini-chart');
+function syncVisuals() {
+  const theme = document.documentElement.dataset.theme;
+  const dark = theme === 'dark' || (theme === 'system' && scheme.matches);
+  chart.setAttribute('theme', dark ? 'dark' : 'light');
+  drawMap();
+}
+for (const button of themeButtons) button.addEventListener('click', syncVisuals);
+scheme.addEventListener('change', syncVisuals);
+syncVisuals();
+fetch('https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_110m_land.geojson', {signal:AbortSignal.timeout(8000)})
+  .then(response => {
+    if (!response.ok) throw new Error('Map unavailable');
+    return response.json();
+  })
+  .then(data => { if (Array.isArray(data.features)) { land = data; drawMap(); } })
+  .catch(() => {});
