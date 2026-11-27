@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101a29">
+<title>Global Command Center · Demo</title>
+<link rel="icon" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="stylesheet" href="./styles.css">
+<script src="./app.js" defer></script>
+</head>
+<body>
+<header><div class="identity"><div class="logo" aria-hidden="true">G</div><div><h1>Global Command Center</h1><p>Operations intelligence</p></div></div><p class="demo">MVP v0.1 · Demo data</p></header>
+<main>
+<section class="summary" aria-label="Executive overview">
+<div><p>Global risk</p><strong class="degraded">Moderate</strong></div>
+<div><p>Business impact</p><strong>Limited</strong></div>
+<div><p>Operational in view</p><strong class="operational" id="healthy">—</strong></div>
+<div><p>Disrupted in view</p><strong class="outage" id="disrupted">—</strong></div>
+</section>
+<div class="layout">
+<section class="panel" aria-labelledby="map-title">
+<h2 id="map-title">Global service health</h2>
+<p class="muted">Select a region to filter the service matrix.</p>
+<div class="map" id="map" aria-label="Schematic world map">
+<span class="land americas" aria-hidden="true"></span>
+<span class="land eurasia" aria-hidden="true"></span>
+<span class="land africa" aria-hidden="true"></span>
+<span class="land australia" aria-hidden="true"></span>
+</div>
+<div class="legend" aria-label="Status legend">
+<span class="operational">● Operational</span><span class="degraded">● Degraded</span><span class="outage">● Outage</span><span class="unknown">● Unknown</span>
+</div>
+</section>
+<section class="panel brief" lang="es" aria-labelledby="brief-title">
+<h2 id="brief-title">Resumen ejecutivo</h2>
+<p class="muted">Escenario simulado. Todos los estados e incidentes son ficticios.</p>
+<article><span class="outage">AMER · P1</span><h3>Webex Contact Center</h3><p>Validar el desvío de llamadas y la continuidad de atención al cliente.</p></article>
+<article><span class="degraded">EMEA · P2</span><h3>Microsoft Azure</h3><p>Revisar las aplicaciones con mayor latencia y confirmar el impacto operativo.</p></article>
+</section>
+</div>
+<section class="panel matrix" aria-labelledby="matrix-title">
+<div class="matrix-head"><h2 id="matrix-title">Critical services matrix</h2>
+<div class="filters"><label>Region<select id="region"><option value="">All regions</option></select></label>
+<label>Status<select id="status"><option value="">All statuses</option><option>Operational</option><option>Degraded</option><option>Outage</option><option>Unknown</option></select></label></div></div>
+<p class="muted" id="result" aria-live="polite"></p>
+<div class="table-wrap"><table aria-label="Service availability"><thead><tr><th scope="col">Service</th><th scope="col">Region</th><th scope="col">Status</th></tr></thead><tbody id="services"></tbody></table></div>
+</section>
+</main>
+</body>
+</html>
