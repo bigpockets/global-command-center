@@ -1,5 +1,5 @@
 const cachePrefix = 'gcc-demo:' + self.registration.scope + ':';
-const cacheName = cachePrefix + '2';
+const cacheName = cachePrefix + '3';
 const assets = ['./', './index.html', './styles.css', './app.js', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', event => {

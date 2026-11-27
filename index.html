@@ -12,7 +12,7 @@
 <script src="./app.js" defer></script>
 </head>
 <body>
-<header><div class="identity"><div class="logo" aria-hidden="true">G</div><div><h1>Global Command Center</h1><p>Operations intelligence</p></div></div><p class="demo">v0.2 · Public service health</p></header>
+<header><div class="identity"><div class="logo" aria-hidden="true">G</div><div><h1>Global Command Center</h1><p>Operations intelligence</p></div></div><p class="demo">v0.2.1 · Public service health</p></header>
 <main>
 <section class="summary" aria-label="Executive overview">
 <div><p>Active public incidents</p><strong id="active-count">—</strong></div>
@@ -47,5 +47,21 @@
 <div class="table-wrap"><table aria-label="Public service incidents"><thead><tr><th scope="col">Incident / products</th><th scope="col">Region</th><th scope="col">Status</th><th scope="col">Updated · local time</th></tr></thead><tbody id="services"></tbody></table></div>
 </section>
 </main>
+<dialog id="incident-detail" aria-labelledby="detail-title">
+<div class="detail-header">
+<p id="detail-status"></p>
+<form method="dialog"><button type="submit" autofocus>Close</button></form>
+</div>
+<h2 id="detail-title"></h2>
+<dl class="detail-fields">
+<div><dt>Affected products</dt><dd id="detail-products"></dd></div>
+<div><dt>Affected locations</dt><dd id="detail-locations"></dd></div>
+<div><dt>Started · local time</dt><dd id="detail-started"></dd></div>
+<div><dt>Last provider update · local time</dt><dd id="detail-updated"></dd></div>
+</dl>
+<h3>Latest update from Google Cloud</h3>
+<div class="provider-update" id="detail-update"></div>
+<p><a id="detail-source" target="_blank" rel="noopener noreferrer">View incident on Google Cloud ↗</a></p>
+</dialog>
 </body>
 </html>

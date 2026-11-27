@@ -30,6 +30,28 @@ function matchesRegion(incident, code) {
   return !code || incident.locations.some(({ id }) => id === 'global' || prefixes[code].test(id));
 }
 
+const detail = byId('incident-detail');
+const formatDate = value => Number.isFinite(Date.parse(value))
+  ? new Date(value).toLocaleString() : 'Not reported';
+
+function openIncident(incident, trigger) {
+  const badge = byId('detail-status');
+  badge.textContent = incident.status;
+  badge.className = incident.status.toLowerCase();
+  byId('detail-title').textContent = incident.summary;
+  byId('detail-products').textContent = incident.products.join(', ');
+  byId('detail-locations').textContent = incident.locations.map(({ title }) => title).join(', ') || 'Not reported';
+  byId('detail-started').textContent = formatDate(incident.startedAt);
+  byId('detail-updated').textContent = formatDate(incident.updatedAt);
+  byId('detail-update').textContent = incident.latestUpdate || 'See the official incident page for updates.';
+  byId('detail-source').href = incident.url;
+  detail.showModal();
+  detail.addEventListener('close', () => {
+    if (trigger.isConnected) trigger.focus();
+    else regionFilter.focus();
+  }, { once: true });
+}
+
 function render() {
   const incidents = snapshot?.incidents ?? [];
   const stale = snapshot && (fetchFailed || Date.now() - Date.parse(snapshot.checkedAt) > 75 * 60 * 1000);
@@ -47,11 +69,18 @@ function render() {
   matrix.replaceChildren();
   for (const incident of visible) {
     const row = matrix.insertRow();
-    const link = document.createElement('a');
-    link.href = incident.url;
-    link.textContent = incident.summary;
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'incident-trigger';
+    trigger.textContent = incident.summary;
+    trigger.setAttribute('aria-haspopup', 'dialog');
+    trigger.addEventListener('click', () => openIncident(incident, trigger));
+    row.addEventListener('click', event => {
+      if (!trigger.contains(event.target)) trigger.click();
+    });
+    row.className = 'incident-row';
     const incidentCell = row.insertCell();
-    incidentCell.append(link);
+    incidentCell.append(trigger);
     const products = document.createElement('div');
     products.className = 'muted';
     products.textContent = incident.products.join(', ');
