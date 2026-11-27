@@ -64,3 +64,5 @@ a,.incident-trigger{color:var(--link)} .operational{color:var(--ok)}.degraded{co
 .health-matrix td button{font-size:28px;min-width:48px;min-height:48px}.region-marker{background:var(--surface);font-size:15px;min-height:44px;padding:8px 12px}
 .region-marker[aria-pressed=true]{box-shadow:0 0 0 2px var(--info)} .incident-row:hover,.incident-row:focus-within{background:var(--selected)}
 @media(max-width:760px){.layout{grid-template-columns:1fr}.preferences{width:100%}.health-matrix td button{min-width:44px}}
+
+#market-chart{min-height:290px;margin:12px 0}
